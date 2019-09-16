@@ -71,10 +71,10 @@ int main() {
     dim3 block (iLen);
     dim3 grid  ((nElem + block.x - 1) / block.x);
 
-    poli1<<<grid, block>>>(d_polinomy, d_results, nElem);
+    poli15<<<grid, block>>>(d_polinomy, nElem);
     cudaDeviceSynchronize();
 
-    poli15<<<grid, block>>>(d_polinomy, nElem);
+    poli1<<<grid, block>>>(d_polinomy, d_results, nElem);
     cudaDeviceSynchronize();
 
     cudaMemcpy(h_polinomy, d_polinomy, nBytes, cudaMemcpyDeviceToHost);
