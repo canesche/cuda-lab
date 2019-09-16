@@ -46,7 +46,7 @@ __global__ void poli4(float* poli, const int N) {
 }
 
 int main() {
-    int nElem = 1 << 25;
+    int nElem = 1 << 26;
 
     size_t nBytes = nElem * sizeof(float);
 
