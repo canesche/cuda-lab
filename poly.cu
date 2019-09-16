@@ -10,25 +10,25 @@
  * performance.
  */
 
-__global__ void poli1(float* poli, const int N) {
+ __global__ void poli1(float* poli, const int N) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    float x = idx;
-
-    if (idx < N)
-        poli[idx] = 4 * x * x * x + 3 * x * x - 7 * x + 5;
-}
-
-__global__ void poli2(float* poli, const int N) {
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    float x = idx;
+    float x = poli[idx];
 
     if (idx < N)
         poli[idx] = 3 * x * x - 7 * x + 5;
 }
 
+__global__ void poli2(float* poli, const int N) {
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    float x = poli[idx];
+
+    if (idx < N)
+        poli[idx] = 4 * x * x * x + 3 * x * x - 7 * x + 5;
+}
+
 __global__ void poli3(float* poli, const int N) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    float x = idx;
+    float x = poli[idx];
 
     if (idx < N)
         poli[idx] = 5 + 5 * x + 5 * x * x + 5 * x * x * x + 5 * x * x * x * x + 5 * x * x * x * x * x;
@@ -36,7 +36,7 @@ __global__ void poli3(float* poli, const int N) {
 
 __global__ void poli4(float* poli, const int N) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    float x = idx;
+    float x = poli[idx];
 
     if (idx < N)
         poli[idx] = 5 + 5 * x + 5 * x * sqrt(x) + 5 * sqrt(x) * x * x + 5 * x *
