@@ -93,29 +93,30 @@ int main() {
 
     int block = min(512, nElem);
     int grid = nElem % block == 0 ?
-	nElem / block : nElem / block + 1;  
+	nElem / block : nElem / block + 1;
 
-    printf("Block, Grid: %d %d\n", block, grid);
+    int blockU2 = min(512, nElem / 2);
+    int gridU2 = (nElem / 2) % blockU2 == 0 ?
+	(nElem / 2) / blockU2 : (nElem / 2) / blockU2 + 1;
+
+    int blockU4 = min(512, nElem / 4);
+    int gridU4 = (nElem / 4) % blockU4 == 0 ?
+	(nElem / 4) / blockU4 : (nElem / 4) / blockU4 + 1;
+
+    printf("Block, Grid: %d %d\nBlockU2, GridU2: %d %d\nBlockU4, GridU4: %d %d\n",
+    	block, grid, blockU2, gridU2, blockU4, gridU4);
 
     init<<<grid, block>>>(d_polinomy, nElem);
     cudaDeviceSynchronize();
     poli1<<<grid, block>>>(d_polinomy, nElem);
     cudaDeviceSynchronize();
-    cudaMemcpy(h_polinomy, d_polinomy, nBytes, cudaMemcpyDeviceToHost);
-
-    int blockU2 = min(512, nElem / 2);
-    int gridU2 = (nElem / 2) % blockU2 == 0 ?
-	(nElem / 2) / blockU2 : (nElem / 2) / blockU2 + 1;  
+    cudaMemcpy(h_polinomy, d_polinomy, nBytes, cudaMemcpyDeviceToHost); 
 
     init<<<grid, block>>>(d_polinomy, nElem);
     cudaDeviceSynchronize();
     poli1U2<<<gridU2, blockU2>>>(d_polinomy, nElem);
     cudaDeviceSynchronize();
     cudaMemcpy(h_polinomyU2, d_polinomy, nBytes, cudaMemcpyDeviceToHost);
-
-    int blockU4 = min(512, nElem / 4);
-    int gridU4 = (nElem / 4) % blockU4 ?
-	(nElem / 4) / blockU4 : (nElem / 4) / blockU4 + 1;
 
     init<<<grid, block>>>(d_polinomy, nElem);
     cudaDeviceSynchronize();
