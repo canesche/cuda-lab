@@ -10,12 +10,12 @@
  * performance.
  */
 
- __global__ void poli1(float* poli, const int N) {
+ __global__ void poli1(float* poli, float* result, const int N) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     float x = poli[idx];
 
     if (idx < N)
-        poli[idx] = 3 * x * x - 7 * x + 5;
+        result[idx] = 3 * x * x - 7 * x + 5;
 }
 
 __global__ void poli2(float* poli, const int N) {
@@ -51,13 +51,15 @@ int main() {
     float* h_polinomy = (float*)malloc(nBytes);
 
     float* d_polinomy;
+    float* d_results;
     cudaMalloc((float**)&d_polinomy, nBytes);
+    cudaMalloc((float**)&d_results, nBytes);
   
     int iLen = 512;
     dim3 block (iLen);
     dim3 grid  ((nElem + block.x - 1) / block.x);
 
-    poli1<<<grid, block>>>(d_polinomy, nElem);
+    poli1<<<grid, block>>>(d_polinomy, d_results, nElem);
     cudaDeviceSynchronize();
 
     cudaMemcpy(h_polinomy, d_polinomy, nBytes, cudaMemcpyDeviceToHost);
