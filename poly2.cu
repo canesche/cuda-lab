@@ -123,15 +123,14 @@ int main() {
     poli1U4<<<gridU4, blockU4>>>(d_polinomy, nElem);
     cudaDeviceSynchronize();
     cudaMemcpy(h_polinomyU4, d_polinomy, nBytes, cudaMemcpyDeviceToHost);
-
+/*
     for (int i = 0; i < nElem; ++i) {
         printf("(%f, %f, %f) ", h_polinomy[i], h_polinomyU2[i], h_polinomyU4[i]);
-/*
         if (abs(h_polinomy[i] - h_polinomyF2[i]) > 1e-10) {
             puts("Deu ruim");
             break;
-        }*/
-    }
+        }
+    }*/
 
     puts("");
 
