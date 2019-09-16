@@ -10,35 +10,47 @@
  * performance.
  */
 
-__global__ void poli1(float* poli, const int N) {
+__global__ void init(float* poli, const int N) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    float x = idx;
 
     if (idx < N)
-        poli[idx] = 4 * x * x * x + 4 * x * x - 4 * x + 4;
+	poli[idx] = idx;
 }
 
-__global__ void poli1F1(float* poli, const int N) {
-    int idx = 2 * threadIdx.x + blockIdx.x * (2 * blockDim.x);
+__global__ void poli1(float* poli, const int N) {
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
     if (idx < N) {
-        float x = idx;
-        float y = idx + 1;
-
+		float x = poli[idx];
         poli[idx] = 4 * x * x * x + 4 * x * x - 4 * x + 4;
-        poli[idx + 1] = 4 * y * y * y + 4 * y * y - 4 * y + 4;
     }
 }
 
-__global__ void poli1F2(float2* poli, const int N) {
+__global__ void poli1U2(float* poli, const int N) {
     int idx = 2 * threadIdx.x + blockIdx.x * (2 * blockDim.x);
 
     if (idx < N) {
-        float x = idx;
-        float y = idx + 1;
+        float x = poli[idx];
+        float y = poli[idx + 1];
 
-        poli[idx].x = 4 * x * x * x + 4 * x * x - 4 * x + 4;
-        poli[idx].y = 4 * y * y * y + 4 * y * y - 4 * y + 4;
+        poli[idx] = 4 * x * x * x + 4 * x * x - 4 * x + 4;
+        poli[idx + 1] = 4 * y * y * y + 4 * y * y - 4 * y + 4;
+     }
+}
+
+__global__ void poli1U4(float* poli, const int N) {
+    int idx = 4 * threadIdx.x + blockIdx.x * (4 * blockDim.x);
+
+    if (idx < N) {
+        float x = poli[idx];
+        float y = poli[idx + 1];
+		float z = poli[idx + 2];
+		float w = poli[idx + 3];
+
+        poli[idx] = 4 * x * x * x + 4 * x * x - 4 * x + 4;
+        poli[idx + 1] = 4 * y * y * y + 4 * y * y - 4 * y + 4;
+		poli[idx + 2] = 4 * z * z * z + 4 * z * z - 4 * z + 4;
+		poli[idx + 3] = 4 * w * w * w + 4 * w * w - 4 * w + 4;
     }
 }
 /*
@@ -55,8 +67,7 @@ __global__ void poli3(float* poli, const int N) {
     float x = idx;
 
     if (idx < N)
-        poli[idx] = 5 + 5 * x + 5 * x * x + 5 * x * x * x + 5 * x * x * x * x + 5 * x * x * x * x * x;
-}
+        poli[idx] = 5 + 5 * x + 5 * x * x + 5 * x * x * x + 5 * x * x * x * x + 5 * x * x * x * x * x}
 
 __global__ void poli4(float* poli, const int N) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -74,37 +85,46 @@ int main() {
     size_t nBytes = nElem * sizeof(float);
 
     float* h_polinomy = (float*)malloc(nBytes);
-    float* h_polinomyF1 = (float*)malloc(nBytes);
-    float* h_polinomyF2 = (float*)malloc(nBytes);
+    float* h_polinomyU2 = (float*)malloc(nBytes);
+    float* h_polinomyU4 = (float*)malloc(nBytes);
 
     float* d_polinomy;
     cudaMalloc((float**)&d_polinomy, nBytes);
-  
-    int iLen = 512;
-    dim3 block (iLen);
-    dim3 grid  ((nElem + block.x - 1) / block.x);
 
+    int block = min(512, nElem);
+    int grid = nElem % block == 0 ?
+	nElem / block : nElem / block + 1;  
+
+    printf("Block, Grid: %d %d\n", block, grid);
+
+    init<<<grid, block>>>(d_polinomy, nElem);
+    cudaDeviceSynchronize();
     poli1<<<grid, block>>>(d_polinomy, nElem);
     cudaDeviceSynchronize();
-
     cudaMemcpy(h_polinomy, d_polinomy, nBytes, cudaMemcpyDeviceToHost);
 
-    dim3 blockF2 (iLen / 2);
-    dim3 gridF2  ((nElem + blockF2.x - 1) / blockF2.x);
+    int blockU2 = min(512, nElem / 2);
+    int gridU2 = (nElem / 2) % blockU2 == 0 ?
+	(nElem / 2) / blockU2 : (nElem / 2) / blockU2 + 1;  
 
-    poli1F1<<<gridF2, blockF2>>>(d_polinomy, nElem);
+    init<<<grid, block>>>(d_polinomy, nElem);
     cudaDeviceSynchronize();
-
-    cudaMemcpy(h_polinomyF1, d_polinomy, nBytes, cudaMemcpyDeviceToHost);
-
-    poli1F2<<<gridF2, blockF2>>>((float2*)d_polinomy, nElem);
+    poli1U2<<<gridU2, blockU2>>>(d_polinomy, nElem);
     cudaDeviceSynchronize();
+    cudaMemcpy(h_polinomyU2, d_polinomy, nBytes, cudaMemcpyDeviceToHost);
 
-    cudaMemcpy(h_polinomyF2, d_polinomy, nBytes, cudaMemcpyDeviceToHost);
+    int blockU4 = min(512, nElem / 4);
+    int gridU4 = (nElem / 4) % blockU4 ?
+	(nElem / 4) / blockU4 : (nElem / 4) / blockU4 + 1;
+
+    init<<<grid, block>>>(d_polinomy, nElem);
+    cudaDeviceSynchronize();
+    poli1U4<<<gridU4, blockU4>>>(d_polinomy, nElem);
+    cudaDeviceSynchronize();
+    cudaMemcpy(h_polinomyU4, d_polinomy, nBytes, cudaMemcpyDeviceToHost);
 
     for (int i = 0; i < nElem; ++i) {
-
-        printf("(%f, %f, %f) ", h_polinomy[i], h_polinomyF1[i], h_polinomyF2[i]);
+        printf("(%f, %f, %f) ", h_polinomy[i], h_polinomyU2[i], h_polinomyU4[i]);
 /*
         if (abs(h_polinomy[i] - h_polinomyF2[i]) > 1e-10) {
             puts("Deu ruim");
@@ -112,8 +132,7 @@ int main() {
         }*/
     }
 
-    printf("%f %f\n", h_polinomy[0], h_polinomyF2[0]);
-    fflush(stdout);
+    puts("");
 
     /*
     poli2<<<grid, block>>>(d_polinomy, nElem);
@@ -132,7 +151,7 @@ int main() {
     cudaMemcpy(h_polinomy, d_polinomy, nBytes, cudaMemcpyDeviceToHost);
 */
     cudaFree(d_polinomy);
-    free(h_polinomyF2);
-    free(h_polinomyF1);
+    free(h_polinomyU4);
+    free(h_polinomyU2);
     free(h_polinomy);
 }
